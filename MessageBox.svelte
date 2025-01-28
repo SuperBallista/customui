@@ -1,54 +1,83 @@
 <script lang="ts">
     import { onMount, onDestroy } from "svelte";
+    import { browser } from "$app/environment";
+    import {
+      isOpen, messageType, messageTitle, messageContent, messageColor,
+      messageInputs, messageResolve, closeMessageBox
+    } from "$lib/custom/customStore";
     import InputBox from "$lib/custom/InputBox.svelte";
     import LoadingSpinner from "$lib/custom/LoadingSpinner.svelte";
   
-    export let type: "error" | "confirm" | "alert" | "loading" | "input" | "success" = "alert";
-    export let title = "메시지";
-    export let message = "";
-    export let loadingMessage = "처리 중...";
-    export let color = "#3498db";
-    export let isOpen = false;
-    export let onConfirm: ((result: { success: boolean; values?: Record<string, string> }) => void) | null = null;
-    export let inputs: { key: string; label: string; type?: string; placeholder?: string }[] = [];
-  
+    $: console.log("💡 현재 messageTitle:", $messageTitle);
+$: console.log("💡 현재 messageColor:", $messageColor);
+
+
     let inputValues: Record<string, string> = {};
   
-    const icons = {
-      error: "❌",
-      loading: "⏳",
-      confirm: "❓",
-      alert: "ℹ️",
-      success: "✅",
-      input: "✍️"
-    };
-  
     function confirm(success: boolean) {
-      if (onConfirm) {
-        onConfirm(type === "input" ? { success, values: success ? inputValues : undefined } : { success });
+      if ($messageResolve) {
+        $messageResolve(
+          $messageType === "input"
+            ? { success, values: success ? inputValues : undefined }
+            : { success }
+        );
       }
-      isOpen = false;
+      closeMessageBox();
     }
   
     function handleKey(event: KeyboardEvent) {
       if (event.key === "Escape") confirm(false);
-      if (event.key === "Enter" && (type === "confirm" || type === "input")) confirm(true);
+      if (event.key === "Enter" && ($messageType === "confirm" || $messageType === "input")) confirm(true);
     }
   
     onMount(() => {
+      if (!browser) return;
       window.addEventListener("keydown", handleKey);
-  
-      if (type === "success") {
-        setTimeout(() => isOpen = false, 1500);
-      }
     });
   
     onDestroy(() => {
+      if (!browser) return;
       window.removeEventListener("keydown", handleKey);
     });
   </script>
   
-  <style>
+  {#if $isOpen}
+    <div class="overlay">
+      <div class="message-box">
+        <div class="header" style="background: {$messageColor}">{$messageTitle}</div>  
+        <div class="content">
+          {#if $messageType === "loading" || $messageType === "success"}
+            <LoadingSpinner size={50} color={$messageColor} />
+          {/if}
+            <p>{$messageContent}</p>
+            {#if $messageType === "input"}
+              {#each $messageInputs as input}
+                <InputBox
+                  bind:value={inputValues[input.key]}
+                  label={input.label}
+                  type={(input.type || "text") as "number" | "text" | "email" | "password"}
+                  placeholder={input.placeholder}
+                />
+              {/each}
+            {/if}
+        </div>
+  
+        {#if $messageType !== "loading" && $messageType !== "success"}
+          <div class="footer">
+            {#if $messageType === "confirm" || $messageType === "input"}
+              <button class="button confirm-btn" on:click={() => confirm(true)}>확인</button>
+              <button class="button cancel-btn" on:click={() => confirm(false)}>취소</button>
+            {:else}
+              <button class="button confirm-btn" on:click={() => confirm(true)}>확인</button>
+            {/if}
+          </div>
+        {/if}
+      </div>
+    </div>
+  {/if}
+  
+
+<style>
     .overlay {
       position: fixed;
       inset: 0;
@@ -56,7 +85,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      z-index: 999;
+      z-index: 9999;
     }
   
     .message-box {
@@ -116,42 +145,3 @@
       background: #c0392b;
     }
   </style>
-  
-  {#if isOpen}
-    <div class="overlay">
-      <div class="message-box">
-        <div class="header" style="background: {color}">{title}</div>
-  
-        <div class="content">
-          {#if type === "loading"}
-            <LoadingSpinner size={50} color={color} />
-            <p>{loadingMessage}</p>
-          {:else}
-            <p>{icons[type]} {message}</p>
-            {#if type === "input"}
-              {#each inputs as input}
-                <InputBox
-                  bind:value={inputValues[input.key]}
-                  label={input.label}
-                  type={(input.type || "text") as "number" | "text" | "email" | "password"}
-                  placeholder={input.placeholder}
-                />
-              {/each}
-            {/if}
-          {/if}
-        </div>
-  
-        {#if type !== "loading" && type !== "success"}
-          <div class="footer">
-            {#if type === "confirm" || type === "input"}
-              <button class="button confirm-btn" on:click={() => confirm(true)}>확인</button>
-              <button class="button cancel-btn" on:click={() => confirm(false)}>취소</button>
-            {:else}
-              <button class="button confirm-btn" on:click={() => confirm(true)}>확인</button>
-            {/if}
-          </div>
-        {/if}
-      </div>
-    </div>
-  {/if}
-  
