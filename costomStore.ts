@@ -1,11 +1,12 @@
 import { writable } from "svelte/store";
 
 
+
 export async function authFetch(
     endpoint: string,
     method: string = "GET", // 특정 메서드로 제한하지 않음
+    accessToken: string | null = "",
     body: any = null,
-    accessToken: string = ""
   ) {
     const headers: HeadersInit = {
       "Content-Type": "application/json",
@@ -23,10 +24,19 @@ export async function authFetch(
   
     if (body && method !== "GET" && method !== "HEAD") {
       options.body = JSON.stringify(body);
-    }
-  
-    return fetch(endpoint, options); // fetch 결과를 그대로 반환
+    }      
+    try{
+    const response = await fetch("/api/auth" + endpoint, options)
+    
+    const newAccessToken = response.headers.get('Authorization')?.split('Bearer ')[1];
+    return {response, newAccessToken:newAccessToken || "" }
   }
+  catch (error)
+  {
+    throw error;
+  }
+  }
+  
   
   export type MessageBoxOptions = {
     type?: "error" | "confirm" | "alert" | "loading" | "input" | "success";
