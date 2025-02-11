@@ -57,6 +57,7 @@
       bind:value
       disabled={disabled}
       on:keydown={handleKey}
+      autofocus
     />
   </div>
   

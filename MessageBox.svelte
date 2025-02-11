@@ -1,19 +1,16 @@
 <script lang="ts">
     import { onMount, onDestroy } from "svelte";
-    import { browser } from "$app/environment";
     import {
-      isOpen, messageType, messageTitle, messageContent, messageColor,
-      messageInputs, messageResolve, closeMessageBox
-    } from "$lib/custom/customStore";
-    import InputBox from "$lib/custom/InputBox.svelte";
-    import LoadingSpinner from "$lib/custom/LoadingSpinner.svelte";
+      messageType, messageTitle, messageContent, messageColor,
+      messageInputs, messageResolve, closeMessageBox, messageIcon
+    } from "./customStore";
+    import InputBox from "./InputBox.svelte";
+    import LoadingSpinner from "./LoadingSpinner.svelte";
+    import messageBoxColor from "./config/messageBoxColor.json"
   
-    $: console.log("💡 현재 messageTitle:", $messageTitle);
-$: console.log("💡 현재 messageColor:", $messageColor);
-
-
     let inputValues: Record<string, string> = {};
-  
+      let confirmButton: HTMLButtonElement;
+
     function confirm(success: boolean) {
       if ($messageResolve) {
         $messageResolve(
@@ -31,20 +28,24 @@ $: console.log("💡 현재 messageColor:", $messageColor);
     }
   
     onMount(() => {
-      if (!browser) return;
       window.addEventListener("keydown", handleKey);
+      if (confirmButton) {
+      confirmButton.focus();
+    }
     });
   
     onDestroy(() => {
-      if (!browser) return;
       window.removeEventListener("keydown", handleKey);
     });
+
   </script>
   
-  {#if $isOpen}
-    <div class="overlay">
-      <div class="message-box">
-        <div class="header" style="background: {$messageColor}">{$messageTitle}</div>  
+      <div class="message-box" style="background: {messageBoxColor.background}; color: {messageBoxColor.font}">
+        <div class="header" style="background: {$messageColor}">
+            {#if $messageIcon}
+            <div class="icon">{@html $messageIcon}</div>  
+            {/if}
+            {$messageTitle}</div>  
         <div class="content">
           {#if $messageType === "loading" || $messageType === "success"}
             <LoadingSpinner size={50} color={$messageColor} />
@@ -68,41 +69,40 @@ $: console.log("💡 현재 messageColor:", $messageColor);
               <button class="button confirm-btn" on:click={() => confirm(true)}>확인</button>
               <button class="button cancel-btn" on:click={() => confirm(false)}>취소</button>
             {:else}
-              <button class="button confirm-btn" on:click={() => confirm(true)}>확인</button>
+            <button class="button confirm-btn" bind:this={confirmButton} on:click={() => confirm(true)}>확인</button>
             {/if}
           </div>
         {/if}
       </div>
-    </div>
-  {/if}
   
 
 <style>
-    .overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.5);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 9999;
-    }
+  .icon {
+    width: 25px;
+    height: 25px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
   
     .message-box {
       width: 90%;
       max-width: 400px;
-      background: white;
       border-radius: 10px;
       overflow: hidden;
       box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
     }
   
     .header {
+      display: flex;
       padding: 12px;
       color: white;
       font-size: 18px;
       font-weight: bold;
       text-align: center;
+      align-items: center;
+    justify-content: center;
+    gap: 8px;
     }
   
     .content {
