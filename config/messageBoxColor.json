@@ -1,4 +1,10 @@
 {
-    "background": "white",
-    "font" : "black"
+    "background": "#FFF8E1",
+    "font" : "#2E2E2E",
+    "default-title-background": "#8D6E63",
+    "btn-default": "#8D6E63",
+    "btn-default-hover":"#6D4C41",
+    "btn-cancel": "#C0C0C0",
+    "btn-cancel-hover": "#909090",
+    "btn-text": "#FAF8F4"
 }

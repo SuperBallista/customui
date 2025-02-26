@@ -1,6 +1,5 @@
 import { writable } from "svelte/store";
-import { get } from "svelte/store";
-
+import defaultColor from "./config/messageBoxColor.json"
 
 export const accessToken = writable<string | null>(null)
 
@@ -47,8 +46,8 @@ export async function authFetch(
 export const messageType = writable<"error" | "confirm" | "alert" | "loading" | "input" | "success" | null>(null);
 export const messageTitle = writable<string>("");
 export const messageContent = writable<string>("");
-export const messageColor = writable<string>("#3498db");
-export const messageInputs = writable<{ key: string; label: string; type?: string; placeholder?: string }[]>([]);
+export const messageColor = writable<string>(defaultColor["default-title-background"]);
+export const messageInputs = writable<{ key: string; label: string; type?: string; placeholder?: string, value: any }[]>([]);
 export const messageResolve = writable<((res: { success: boolean; values?: Record<string, string> }) => void) | null>(null);
 export const messageIcon = writable<string | null>(null); // ✅ 아이콘을 직접 저장
 
@@ -67,19 +66,25 @@ const messageIcons = {
     title?: string;
     message?: string;
     color?: string;
-    inputs?:  { key: string; label: string; type?: string; placeholder?: string }[];
+    inputs?:  { key: string; label: string; type?: string; placeholder?: string, value: any }[];
   };
   
   type MessageBoxResponse = { success: boolean; values?: Record<string, string> };
     
-  export function showMessageBox(type:"error" | "confirm" | "alert" | "loading" | "input" | "success", title: string, message: string, color?: string, inputs?: { key: string; label: string; type?: string; placeholder?: string }[] ): Promise<MessageBoxResponse> {
+  export function showMessageBox(type:"error" | "confirm" | "alert" | "loading" | "input" | "success", title: string, message: string, color?: string, inputs?: { key: string; label: string; type?: string; value?:any, placeholder?: string }[] ): Promise<MessageBoxResponse> {
     return new Promise((resolve) => {
       isOpen.set(true);
       messageType.set(type ?? null);
       messageTitle.set(title ?? "제목 없음"); 
       messageContent.set(message ?? "메세지가 없습니다");
-      messageColor.set(color ?? "#1e1e2f");
-      messageInputs.set(inputs ?? []);
+      messageColor.set(color ?? defaultColor["default-title-background"]);
+
+    // 🟢 입력값을 포함하여 messageInputs에 저장
+    messageInputs.set(inputs?.map(input => ({
+      ...input,
+      value: input.value ?? "" // 초기값 설정
+    })) ?? []);
+
       messageResolve.set(resolve);
       messageIcon.set(messageIcons[type] ?? null);
       if (type === "success") {
@@ -92,12 +97,6 @@ const messageIcons = {
   }
   
   export function closeMessageBox() {
-    console.log("🚨 closeMessageBox 실행됨! 초기화 시작", {
-      title: get(messageTitle),
-      content: get(messageContent),
-      type: get(messageType),
-      isOpen: get(isOpen),
-    });
   
     isOpen.set(false);
     messageType.set(null);
@@ -109,12 +108,3 @@ const messageIcons = {
     messageIcon.set(null);
   }
   
-  messageTitle.subscribe(value => {
-    console.log("🔄 messageTitle 변경 감지:", value, " | 현재 상태:", {
-      isOpen: get(isOpen),
-      messageType: get(messageType),
-      messageContent: get(messageContent),
-    });
-  });
-
-
