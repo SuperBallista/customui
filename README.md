@@ -70,7 +70,7 @@
 <script>
     function showPrompt() {
         showMessageBox({
-            type: "prompt",
+            type: "input",
             title: "사용자 입력",
             content: "이름을 입력하세요:",
             inputs: [{ name: "username", placeholder: "이름 입력..." }],
