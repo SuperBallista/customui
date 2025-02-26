@@ -20,12 +20,10 @@
 ```svelte
 <script>
     import BoxOverlay from "./BoxOverlay.svelte";
-    import MessageBox from "./MessageBox.svelte";
     import { showMessageBox } from "./customStore";
 </script>
 
 <BoxOverlay />
-<MessageBox />
 ```
 
 ### 간단한 알림 메시지 표시
